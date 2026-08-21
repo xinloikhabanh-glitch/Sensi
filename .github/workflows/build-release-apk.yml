@@ -1,0 +1,58 @@
+name: Build Sensi Analytics Release APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install required SDK components
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          chmod +x "$ANDROID_HOME/build-tools/34.0.0/aidl" || true
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.2'
+
+      - name: Build release APK (signed with fixed debug keystore for testing)
+        run: gradle --no-daemon assembleRelease
+
+      - name: Rename APK with build number
+        run: |
+          mkdir -p app/build/outputs/apk/release/renamed
+          cp app/build/outputs/apk/release/app-release.apk \
+             "app/build/outputs/apk/release/renamed/SensiAnalytics-v2.0-release-run${{ github.run_number }}.apk"
+
+      - name: Upload release APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SensiAnalytics-release-apk-run${{ github.run_number }}
+          path: app/build/outputs/apk/release/renamed/*.apk
