@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sensi Analytics - Quản lý Key</title>
+<style>
+  :root {
+    --bg-start: #0F0F1A;
+    --bg-end: #1B1033;
+    --card-bg: #221A38;
+    --accent-purple: #8B5CF6;
+    --accent-orange: #FF7A45;
+    --text-primary: #FFFFFF;
+    --text-secondary: #B4AECB;
+    --success: #4ADE80;
+    --danger: #F87171;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(135deg, var(--bg-start), #171226, var(--bg-end));
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 24px;
+  }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .subtitle { color: var(--text-secondary); font-size: 13px; margin-bottom: 24px; }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid #332A4A;
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 20px;
+    max-width: 900px;
+  }
+  .card h2 {
+    font-size: 15px;
+    margin: 0 0 14px 0;
+    color: var(--accent-orange);
+  }
+  label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    margin-top: 10px;
+  }
+  input, select {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #3a2f57;
+    background: #1a1430;
+    color: var(--text-primary);
+    font-size: 14px;
+  }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .row > div { flex: 1; min-width: 140px; }
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 14px;
+  }
+  .btn-primary {
+    background: linear-gradient(90deg, var(--accent-purple), var(--accent-orange));
+    color: white;
+  }
+  .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 6px 10px; font-size: 12px; }
+  .btn-warn { background: transparent; color: var(--accent-orange); border: 1px solid var(--accent-orange); padding: 6px 10px; font-size: 12px; margin-left: 6px; }
+  .btn-small { margin-top: 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #332A4A; }
+  th { color: var(--text-secondary); font-weight: 600; font-size: 11px; text-transform: uppercase; }
+  .key-cell { font-family: monospace; font-size: 12px; }
+  .status-active { color: var(--success); }
+  .status-expired { color: var(--accent-orange); }
+  .status-revoked { color: var(--danger); }
+  #msg { font-size: 12px; margin-top: 10px; min-height: 16px; }
+  #msg.ok { color: var(--success); }
+  #msg.err { color: var(--danger); }
+  .token-row { display: flex; gap: 8px; align-items: center; margin-bottom: 20px; max-width: 900px; }
+  .token-row input { flex: 1; }
+  .created-box {
+    margin-top: 12px;
+    padding: 10px;
+    background: #1a1430;
+    border-radius: 10px;
+    font-family: monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+  <h1>Sensi Analytics — Quản lý Key</h1>
+  <div class="subtitle">Trang quản trị: tạo / xoá / thu hồi key kích hoạt app</div>
+
+  <div class="token-row">
+    <input id="adminToken" type="password" placeholder="Nhập X-Admin-Token của bạn tại đây" />
+    <button class="btn-primary btn-small" onclick="saveTokenAndLoad()">Đăng nhập</button>
+  </div>
+
+  <div class="card">
+    <h2>Tạo key mới</h2>
+    <div class="row">
+      <div>
+        <label>Loại key</label>
+        <select id="newTier">
+          <option value="D">Ngày (1 ngày)</option>
+          <option value="W">Tuần (7 ngày)</option>
+          <option value="M" selected>Tháng (30 ngày)</option>
+          <option value="Y">Năm (365 ngày)</option>
+          <option value="P">Vĩnh viễn</option>
+        </select>
+      </div>
+      <div>
+        <label>Số ngày tuỳ chỉnh (bỏ trống = mặc định theo loại)</label>
+        <input id="newCustomDays" type="number" step="0.1" placeholder="VD: 3.5" />
+      </div>
+      <div>
+        <label>Số lượng key</label>
+        <input id="newCount" type="number" value="1" min="1" max="500" />
+      </div>
+    </div>
+    <label>Ghi chú (tuỳ chọn - VD: tên khách hàng)</label>
+    <input id="newNote" type="text" placeholder="VD: giao cho bạn A" />
+    <button class="btn-primary" onclick="createKeys()">Tạo key</button>
+    <div id="createdBox" class="created-box"></div>
+  </div>
+
+  <div class="card" style="max-width: 100%;">
+    <h2>Danh sách key</h2>
+    <button class="btn-primary btn-small" onclick="loadKeys()">Tải lại danh sách</button>
+    <div id="msg"></div>
+    <div style="overflow-x:auto;">
+      <table id="keysTable">
+        <thead>
+          <tr>
+            <th>Key</th>
+            <th>Loại</th>
+            <th>Trạng thái</th>
+            <th>Hết hạn</th>
+            <th>Thiết bị đã khoá</th>
+            <th>Ghi chú</th>
+            <th>Hành động</th>
+          </tr>
+        </thead>
+        <tbody id="keysBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+<script>
+  // Token admin CHỈ lưu trong bộ nhớ trình duyệt (sessionStorage) của máy bạn,
+  // KHÔNG gửi đi đâu ngoài chính server này, KHÔNG lưu cứng trong file này.
+  function getToken() { return sessionStorage.getItem('admin_token') || ''; }
+
+  function saveTokenAndLoad() {
+    const t = document.getElementById('adminToken').value.trim();
+    if (!t) { showMsg('Vui lòng nhập token', true); return; }
+    sessionStorage.setItem('admin_token', t);
+    loadKeys();
+  }
+
+  function showMsg(text, isErr) {
+    const el = document.getElementById('msg');
+    el.textContent = text;
+    el.className = isErr ? 'err' : 'ok';
+  }
+
+  function fmtEpoch(epoch) {
+    if (!epoch) return '-';
+    if (epoch >= 4070908800 - 86400) return 'Vĩnh viễn';
+    const d = new Date(epoch * 1000);
+    return d.toLocaleString('vi-VN');
+  }
+
+  async function apiCall(path, method, body) {
+    const res = await fetch(path, {
+      method: method || 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Admin-Token': getToken(),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || ('Lỗi HTTP ' + res.status));
+    return data;
+  }
+
+  async function loadKeys() {
+    if (!getToken()) { showMsg('Cần nhập token trước', true); return; }
+    try {
+      const data = await apiCall('/keys', 'GET');
+      renderKeys(data.keys || []);
+      showMsg('Đã tải ' + (data.keys || []).length + ' key', false);
+    } catch (e) {
+      showMsg(e.message, true);
+    }
+  }
+
+  function statusOf(k) {
+    if (k.revoked) return { text: 'Đã thu hồi', cls: 'status-revoked' };
+    const now = Math.floor(Date.now() / 1000);
+    if (now >= k.expires_at) return { text: 'Hết hạn', cls: 'status-expired' };
+    return { text: 'Còn hạn', cls: 'status-active' };
+  }
+
+  function renderKeys(keys) {
+    const body = document.getElementById('keysBody');
+    body.innerHTML = '';
+    keys.forEach(k => {
+      const st = statusOf(k);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="key-cell">${k.key}</td>
+        <td>${k.tier}</td>
+        <td class="${st.cls}">${st.text}</td>
+        <td>${fmtEpoch(k.expires_at)}</td>
+        <td>${k.bound_device_id ? k.bound_device_id.slice(0, 10) + '...' : '-'}</td>
+        <td>${k.note || '-'}</td>
+        <td>
+          <button class="btn-danger" onclick="deleteKey('${k.key}')">Xoá hẳn</button>
+          ${!k.revoked ? `<button class="btn-warn" onclick="revokeKey('${k.key}')">Thu hồi</button>` : ''}
+        </td>
+      `;
+      body.appendChild(tr);
+    });
+  }
+
+  async function createKeys() {
+    const tier = document.getElementById('newTier').value;
+    const customDaysRaw = document.getElementById('newCustomDays').value;
+    const count = parseInt(document.getElementById('newCount').value || '1', 10);
+    const note = document.getElementById('newNote').value.trim();
+
+    const body = { tier, count };
+    if (customDaysRaw) body.custom_days = parseFloat(customDaysRaw);
+    if (note) body.note = note;
+
+    try {
+      const data = await apiCall('/keys', 'POST', body);
+      const box = document.getElementById('createdBox');
+      box.style.display = 'block';
+      box.textContent = data.created.map(k => k.key).join('\n');
+      showMsg('Đã tạo ' + data.created.length + ' key', false);
+      loadKeys();
+    } catch (e) {
+      showMsg(e.message, true);
+    }
+  }
+
+  async function deleteKey(key) {
+    if (!confirm('Xoá hẳn key ' + key + '? Không thể hoàn tác.')) return;
+    try {
+      await apiCall('/keys/' + encodeURIComponent(key), 'DELETE');
+      showMsg('Đã xoá ' + key, false);
+      loadKeys();
+    } catch (e) {
+      showMsg(e.message, true);
+    }
+  }
+
+  async function revokeKey(key) {
+    if (!confirm('Thu hồi key ' + key + '? Người đang dùng sẽ bị đăng xuất trong vài phút.')) return;
+    try {
+      await apiCall('/keys/' + encodeURIComponent(key) + '/revoke', 'POST');
+      showMsg('Đã thu hồi ' + key, false);
+      loadKeys();
+    } catch (e) {
+      showMsg(e.message, true);
+    }
+  }
+
+  // Tự tải danh sách nếu token đã được lưu từ trước (cùng phiên trình duyệt)
+  if (getToken()) {
+    document.getElementById('adminToken').value = getToken();
+    loadKeys();
+  }
+</script>
+
+</body>
+</html>
