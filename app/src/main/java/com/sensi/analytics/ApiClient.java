@@ -25,7 +25,7 @@ public class ApiClient {
      * ĐỔI GIÁ TRỊ NÀY thành URL server thật sau khi deploy (xem server/README.md).
      * Ví dụ: "https://sensi-license.onrender.com"
      */
-    public static final String BASE_URL = "https://your-server-url.example.com";
+    public static final String BASE_URL = "https://lev1zalnazyrics.onrender.com/admin";
 
     private static final int TIMEOUT_MS = 10_000;
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
