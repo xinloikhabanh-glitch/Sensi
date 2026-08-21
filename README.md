@@ -1,4 +1,4 @@
-# Sensi Analytics 1.0
+# Sensi Analytics 2.0
 
 Ứng dụng Android (Java) phân tích cấu hình thiết bị và đề xuất thông số tối ưu
 cho Free Fire, sử dụng Shizuku API để thực thi một số lệnh cài đặt hệ thống an toàn.
@@ -46,7 +46,7 @@ Các chức năng này cần quyền do **Shizuku** cấp (không cần root má
 | `AnalyticsService.java` | Áp dụng / phục hồi cài đặt hệ thống |
 | `OptimizationHistory.java` | Lưu tối đa 3 lần lịch sử gần nhất |
 
-## Hệ thống key kích hoạt (v1.5.2 — dùng server riêng)
+## Hệ thống key kích hoạt (v2 — dùng server riêng)
 
 App yêu cầu nhập key trước khi vào màn hình chính (`LoginActivity`). Việc
 **tạo key**, **xoá/thu hồi key**, và **xác thực key** giờ nằm trên 1 server
